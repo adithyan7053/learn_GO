@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/akhil/golang-react-todo/models"
+	"github.com/adithyan7053/learn_GO/models"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,7 +25,8 @@ func init() {
 }
 
 func loadTheEnv() {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("../.env")
+
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
@@ -55,8 +56,8 @@ func createDBInstance() {
 }
 
 func GetAllTasks(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set()("Content-Type", "application/x-www-form-urlencoded")
-	w.Header().Set()("Access-Control-Allow-Origin", "*")
+	w.Header().Set("content-Type", "application/x-www-form-urlencoded")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	payload := getAllTasks()
 	json.NewEncoder(w).Encode(payload)
 }
@@ -73,10 +74,10 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func TaskComplete(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set()("content-Type", "application/x-www-form-urlencoded")
-	w.Header().Set()("Access-Control-Allow-Origin", "*")
-	w.Header().Set()("Access-Control-Allow-Methods", "PUT")
-	w.Header().Set()("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("content-Type", "application/x-www-form-urlencoded")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "PUT")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	params := mux.Vars(r)
 	TaskCompleted(params["id"])
@@ -112,7 +113,7 @@ func DeleteAllTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAllTasks() []primitive.M {
-	cur, err := collection.Find(context.Background, bson.D{})
+	cur, err := collection.Find(context.Background(), bson.D{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -143,18 +144,40 @@ func TaskCompleted(task string) {
 	fmt.Println("Modified Count", result.ModifiedCount)
 }
 
-func undoTask(id string) {
-	fmt.Println("Task undone")
+func undoTask(task string) {
+	id, _ := primitive.ObjectIDFromHex(task)
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{"status": false}}
+	result, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Modified Count", result.ModifiedCount)
 }
 
-func deleteOneTask(id string) {
-	fmt.Println("Task deleted")
+func deleteOneTAsk(task string) {
+	id, _ := primitive.ObjectIDFromHex(task)
+	filter := bson.M{"_id": id}
+	result, err := collection.DeleteOne(context.Background(), filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Deleted Count", result.DeletedCount)
 }
 
-func deleteAllTasks() {
-	fmt.Println("All tasks deleted")
+func deleteAllTasks() int64 {
+	deleteResult, err := collection.DeleteMany(context.Background(), bson.D{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Deleted Count", deleteResult.DeletedCount)
+	return deleteResult.DeletedCount
 }
 
 func insertOneTask(task models.TodoList) {
-	fmt.Println("Task inserted")
+	insertResult, err := collection.InsertOne(context.Background(), task)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Inserted a Single Record", insertResult.InsertedID)
 }

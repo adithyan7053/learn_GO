@@ -1,4 +1,4 @@
-module github.com/akhil/golang-react-todo
+module github.com/adithyan7053/learn_GO
 
 go 1.23.5
 
